@@ -15,15 +15,20 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.Timer;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.io.*;
 
-/** @see http://stackoverflow.com/questions/3617326 */
+
 public class RSSJavaScroll {
 
     private void display() {
         JFrame f = new JFrame("MarqueeTest");
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        String s = "Everything you want is out there waiting for you to ask. Everything you want also wants you. But you have to take action to get it.";
-        MarqueePanel mp = new MarqueePanel(s, 32);
+       // String s = "Everything you want is out there waiting for you to ask. Everything you want also wants you. But you have to take action to get it.";
+       String s;
+        s = readRSSFeed("http://rss.cnn.com/rss/edition.rss");
+       MarqueePanel mp = new MarqueePanel(s, 120);
         f.add(mp);
         f.pack();
         f.setLocationRelativeTo(null);
@@ -32,6 +37,9 @@ public class RSSJavaScroll {
     }
 
     public static void main(String[] args) {
+        
+      System.out.println(readRSSFeed("http://rss.cnn.com/rss/edition.rss"));          
+
         EventQueue.invokeLater(new Runnable() {
 
             @Override
@@ -39,8 +47,36 @@ public class RSSJavaScroll {
                 new RSSJavaScroll().display();
             }
         });
+        
+    }
+
+  public static String readRSSFeed(String urlAddress){
+        try{
+            URL rssUrl = new URL (urlAddress);
+            BufferedReader in = new BufferedReader(new InputStreamReader(rssUrl.openStream()));
+            String sourceCode = "";
+            String line;
+            while ((line = in.readLine()) != null) {
+    int titleEndIndex = 0;
+    int titleStartIndex = 0;
+    while (titleStartIndex >= 0) {
+        titleStartIndex = line.indexOf("<title>", titleEndIndex);
+        if (titleStartIndex >= 0) {
+            titleEndIndex = line.indexOf("</title>", titleStartIndex);
+            sourceCode += line.substring(titleStartIndex + "<title>".length(), titleEndIndex) + "\n";
+        }
     }
 }
+            in.close();
+            return sourceCode;
+        } catch (MalformedURLException ue){
+            System.out.println("Malformed URL");
+        } catch (IOException ioe){
+            System.out.println("Something went wrong reading the contents");
+        }
+        return null;
+    }}
+
 
 /** Side-scroll n characters of s. */
 class MarqueePanel extends JPanel implements ActionListener {
@@ -83,4 +119,6 @@ class MarqueePanel extends JPanel implements ActionListener {
         }
         label.setText(s.substring(index, index + n));
     }
+    
 }
+
